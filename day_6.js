@@ -7,11 +7,19 @@ function run(){
     let sum = 0
     
     input.forEach(group => {
-        const uniqueAnswersInGroup = getUniqueAnswersInGroup(group)
-        sum += uniqueAnswersInGroup.length
+        const sharedAnswers = getSharedAnswersInGroup(group)
+        sum += sharedAnswers.length
     })
 
     console.log(sum)
+}
+
+function getSharedAnswersInGroup(group){
+    const possibleAnswers = getUniqueAnswersInGroup(group)
+
+    return possibleAnswers.filter(answer => {
+        return confirmEveryoneInGroupAnswered(group, answer)
+    })
 }
 
 function getUniqueAnswersInGroup(group){
@@ -28,4 +36,17 @@ function getUniqueAnswersInGroup(group){
     })
 
     return uniqueAnswersInGroup
+}
+
+function confirmEveryoneInGroupAnswered(group, answer){
+    for(let i=0; i<group.length; i++){
+        const person = group[i];
+        const answers = person.split('')
+        
+        if(!answers.includes(answer)){
+            return false
+        }
+    }
+
+    return true
 }
