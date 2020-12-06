@@ -1194,7 +1194,7 @@ function validateByr(passport, value){
 function validateIyr(passport, value){
     //iyr (Issue Year) - four digits; at least 2010 and at most 2020.
 
-    var regex = new RegExp(/$\d{4}$/, "g");
+    var regex = new RegExp(/^\d{4}$/, "g");
     return regex.test(value) && Number(value) >= 2010 &&  Number(value) <= 2020
 }
 
