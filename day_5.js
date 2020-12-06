@@ -3,37 +3,40 @@ const input = ['BFBFFFBLRL','FFBFFBFRLR','BBBFFBBRLL','FBFFBBFLRL','BFBBFFFLRR',
 
 const rowCount = 128
 const columnCount = 8
-let max = 0
+const seatsTaken = []
 
-input.forEach(ticket => {
-    let row = buildArray(rowCount)
-    let column = buildArray(columnCount)
-    const directions = ticket.split('')
+populateSeats();
+findSeat();
 
-    directions.forEach(direction => {
-        switch(direction){
-            case 'F':
-                row = row.slice(0, row.length / 2)
-            break;
-            case 'B':
-                row = row.slice(row.length / 2)
-            break;
-            case 'L':
-                column = column.slice(0, column.length / 2)
-            break;
-            case 'R':
-                column = column.slice(column.length / 2)
-            break;
-        }
+function populateSeats() {
+    input.forEach(ticket => {
+        let row = buildArray(rowCount)
+        let column = buildArray(columnCount)
+        const directions = ticket.split('')
+
+        directions.forEach(direction => {
+            switch(direction){
+                case 'F':
+                    row = row.slice(0, row.length / 2)
+                break;
+                case 'B':
+                    row = row.slice(row.length / 2)
+                break;
+                case 'L':
+                    column = column.slice(0, column.length / 2)
+                break;
+                case 'R':
+                    column = column.slice(column.length / 2)
+                break;
+            }
+        })
+
+        seatsTaken.push(calculateSeatId(row[0], column[0]))
     })
-
-    calculateSeatId(row[0], column[0])
-})
-
-console.log(max)
+}
 
 function buildArray(count){
-    let array = []
+    const array = []
 
     for(let i=0; i<count; i++){
         array.push(i)
@@ -44,11 +47,20 @@ function buildArray(count){
 
 function calculateSeatId(row, column){
     const seatId = row * 8 + column
-    console.log(row, column, seatId)
 
-    if(seatId > max){
-        max = seatId
+    return {row, column, seatId}
+}
+
+function isSeatVacant(row, column){
+    return seatsTaken.findIndex(seat => seat.row == row && seat.column == column) == -1
+}
+
+function findSeat(){
+    for(let rowIndex=1; rowIndex<rowCount-1; rowIndex++){
+        for(let colIndex=0; colIndex<columnCount; colIndex++){
+            if(isSeatVacant(rowIndex, colIndex)){
+                console.log(rowIndex, colIndex, calculateSeatId(rowIndex, colIndex))
+            }
+        }
     }
-
-    return seatId
 }
