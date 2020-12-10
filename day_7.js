@@ -6,16 +6,6 @@ parsedInput.forEach(bag => recurseBags(bag))
 
 const goldBag = findBagByColor('shiny gold')
 produceComputedCount(goldBag)
-//console.log(goldBag)
-log(goldBag)
-
-function log(item){
-    let newThing = {...item}
-    delete newThing.parent
-    delete newThing.contents
-    console.log(newThing)
-    item.contents.forEach(x => log(x))
-}
 
 function produceComputedCount(bag){
     bag.computed = bag.count || 1
@@ -48,7 +38,7 @@ function searchForColor(item, color){
 
 function recurseBags(item){
     if(!item.contents){
-        item.contents = [...findBagByColor(item.bag).contents.map(x => {return {...x, parent: item}})]
+        item.contents = [...findBagByColor(item.bag).contents.map(x => ({...x, parent: item}))]
     }
 
     item.contents.forEach(x => recurseBags(x))
