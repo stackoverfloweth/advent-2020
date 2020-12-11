@@ -21,7 +21,6 @@ const sorted = input
     }, {})
 const keys = Object.keys(sorted).sort((a, b) => b-a)
 traverse(0)
-console.log(sorted)
 console.log(sorted[socket].sum)
 
 function max(arr){
@@ -38,9 +37,6 @@ function calculatePossibleNextSteps(target){
 
 function traverse(index){
     const key = sorted[keys[index]]
-    if(!key){
-        return
-    }
 
     if(key.steps.length == 0){
         key.sum = 1
@@ -48,9 +44,7 @@ function traverse(index){
         key.sum = key.steps.reduce((sum, x) => sum + sorted[x].sum, 0)
     }
 
-    // const childRoutes = key.steps.reduce((sum, x) => { 
-    //     return traverse(x)
-    // }, 0)
-
-    traverse(++index)
+    if(index++ < keys.length -1){
+        traverse(index)
+    }
 }
