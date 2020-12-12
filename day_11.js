@@ -1,4 +1,4 @@
-const input = `L.LL.LL.LL
+const sample = `L.LL.LL.LL
 LLLLLLL.LL
 L.L.L..L..
 LLLL.LL.LL
@@ -8,7 +8,7 @@ L.LLLLL.LL
 LLLLLLLLLL
 L.LLLLLL.L
 L.LLLLL.LL`
-const input1 = `LLLLLLLLL.LLLL.LLLLLLLLLLLLLLLL.LL.LLLLLLLL.LLLLLLLL.LLLLLLLLLLLLLLLL.L.LLLLLLLLLLLLLLL.LLLL.LLL
+const input = `LLLLLLLLL.LLLL.LLLLLLLLLLLLLLLL.LL.LLLLLLLL.LLLLLLLL.LLLLLLLLLLLLLLLL.L.LLLLLLLLLLLLLLL.LLLL.LLL
 .LLLLLLLL.LL.L.LLLLLLLLL.LLLLLLL.L.LLLLLLLL.LLLLLLLLLLLLLLLLLL.LLLL.L.LLLLL.L.LLLLLLLLLLLLLLLLLL
 LLLLLLLLL...LL.LLLLLLLL..LLLLLLLLL.L..LLLLLLLLLLLLLLLLLLLLLLLL.LLL..LLLLLLLLLLLLLLLLLLLLLLLLLLLL
 LLLLLLL.LLLLLL.LLLLLLLLL.LL.LLLLLL.LLLLLLLL.LLLLLLLL.LLLLLLLL..LLLLL.LLLLLL...LLLLLLL.LLLLLLLLLL
@@ -101,14 +101,18 @@ LLLLLLLLL.LLLLLLLLLLLLLL.LLLLLLLLLLLLLLLLLLLLLLLLLLL.LLLLLLLLL.LLLL.LLLLLLLLL.LL
 LLLLLLLLL.LL.L.LLLLLLLLL.LLLLLL.LL.LLLLLLLL.LLLLLLLLLLLLLLLLLL.LLL.LLLLLLLLLLLLLLLLLLLL.LL..LLLL`
 
 const maps = [
-    input.split('\n').reduce((rtn, row, index) => ({...rtn, [index]: parseRow(row)}), {})
+    parseX(input)
 ]
-const rowKeys = Object.keys(maps[0]);
-const colKeys = Object.keys(maps[0][0])
 
-//while(rebuild()){}
-rebuild()
-rebuild()
+function parseX(x){
+    return x.split('\n').reduce((rtn, y, index) => ({...rtn, [index]: parseY(y)}), {})
+}
+
+function parseY(y){
+    return y.split('').reduce((rtn, x, index) => ({...rtn, [index]: x}),{})
+}
+
+while(rebuild()){}
 console.log(JSON.stringify(mostRecentMap()).match(/#/g).length)
 
 function mostRecentMap(){
@@ -116,158 +120,97 @@ function mostRecentMap(){
 }
 
 function newMap(){
-    return rowKeys.reduce((rtn, row, index) => ({...rtn, [index]: newRow()}), {})
-}
-
-function newRow(){
-    return colKeys.reduce((rtn, col, index) => ({...rtn, [index]: null}), {})
+    return JSON.parse(JSON.stringify(mostRecentMap()));
 }
 
 function rebuild(){
     let changed = false
     const map = newMap()
 
-    for(let rowIndex = 0; rowIndex < rowKeys.length; rowIndex++){
-        for(let colIndex = 0; colIndex < colKeys.length; colIndex++){
-            if(isFloor(rowIndex, colIndex)){
-                map[rowIndex][colIndex] = "."
+    for(let y = 0; y < Object.keys(map).length; y++){
+        for(let x = 0; x < Object.keys(map[y]).length; x++){
+
+            const report = getAdjacentReport({x, y})
+
+            if(isEmpty({x, y}) && report.filter(point => point.isOccupied).length == 0){
+                changed = true
+                map[y][x] = "#"
+            }
+            else if(isOccupied({x, y}) && report.filter(point => point.isOccupied).length >= 5){
+                changed = true
+                map[y][x] = "L"
             }
 
-            const report = getAdjacentReport(rowIndex, colIndex)
-            if(isEmpty(rowIndex,colIndex)){
-                if(report.filter(x => x.isOccupied).length == 0){
-                    changed = true
-                    map[rowIndex][colIndex] = "#"
-                }else{
-                    map[rowIndex][colIndex] = "L"
-                }
-            }
-            else if(isOccupied(rowIndex,colIndex)){
-                if(report.filter(x => x.isOccupied).length >= 5){
-                    changed = true
-                    map[rowIndex][colIndex] = "L"
-                }else{
-                    map[rowIndex][colIndex] = "#"
-                }
-            }
         }   
     }
 
     maps.push(map)
-    console.log('--------------------')
-    console.log(map)
     return changed
 }
 
-function getAdjacentReport(row, col){
-    const report = []
+function getAdjacentReport(target){
+    const report = [] 
+    const slopes = [
+        { rise: 1, run: 0 },
+        { rise: 1, run: 1 },
+        { rise: 0, run: 1 },
+        { rise: -1, run: 1 },
+        { rise: -1, run: 0 },
+        { rise: -1, run: -1 },
+        { rise: 0, run: -1 },
+        { rise: 1, run: -1 },
+    ]
 
-    function checkPoint(point, target){
-        pointIsValid = point.row != target.row && point.col != target.col && isDefined(point.row, point.col)
-
-        if(pointIsValid){            
-            const slope = calculateSlope({x: point.col, y:point.row}, {x: target.col, y: target.row})
-    
-            if(!isFloor(point.row, point.col) && !report.some(x => x.slope == slope)){
-                const thing = {
-                    target: [target.row, target.col],
-                    slope: slope,
-                    spot: [point.row, point.col],
-                    isOccupied: isOccupied(point.row, point.col),
-                    isEmpty: isEmpty(point.row, point.col),
-                }
-                if(target.row == 0 && target.col == 0){
-                    console.log(thing)
-                }
-                report.push(thing)
-            }
-        }
-
-        return pointIsValid
-    }    
-
-    let distanceFromTarget = 1
-    let atLeastOneCellDefined = true
-
-    while(atLeastOneCellDefined){
-        // console.log(distanceFromTarget)
-        atLeastOneCellDefined = false;
-
-        let rowIndex = row - distanceFromTarget
-        let colIndex = col - distanceFromTarget
-        let dir = "right"
-
-        while(dir != null){
-            switch(dir){
-                case "right":
-                    if(rowIndex++ >= row + distanceFromTarget){
-                        dir = "down"
-                    }
-                    break;
-                case "down":
-                    if(colIndex++ >= col + distanceFromTarget){
-                        dir = "left"
-                    }
-                    break;
-                case "left":
-                    if(rowIndex-- <= row - distanceFromTarget){
-                        dir = "up"
-                    }
-                    break;
-                case "up":
-                    if(colIndex-- <= col - distanceFromTarget){
-                        dir = null
-                    }
-                    break;
-            }
-
-            if(checkPoint({row: rowIndex, col: colIndex}, {row, col})){
-                atLeastOneCellDefined = true
-            }
-        }
-
-        distanceFromTarget++
-    }
+    slopes.forEach(slope => {
+        const firstVisiblePoint = getFirstVisiblePoint(target, slope)
+        
+        report.push({
+            target: target,
+            slope: slope,
+            point: firstVisiblePoint,
+            isOccupied: isOccupied(firstVisiblePoint),
+            isEmpty: isEmpty(firstVisiblePoint),
+        })
+    })
 
     return report
+}
+
+function getFirstVisiblePoint(target, slope){
+    let y = target.y
+    let x = target.x
+
+    while(isDefined({x, y})){
+        y += slope.rise
+        x += slope.run
+
+        if(!isFloor({x, y})){
+            return {x, y}
+        }
+    }
 }
 
 function calculateSlope(point, target){
     return (point.y - target.y) / (point.x - target.x)
 }
 
-function isDefined(row, col){
+function getPoint(point){
     const map = mostRecentMap()
-    return map[row] && map[row][col]
+    return map[point.y] && map[point.y][point.x]
 }
 
-function isFloor(row, col){
-    const map = mostRecentMap()
-    if(!isDefined(row, col)){
-        return false
-    }
-
-    return map[row][col] == "."
+function isDefined(point){
+    return getPoint(point) != undefined
 }
 
-function isOccupied(row, col){
-    const map = mostRecentMap()
-    if(!isDefined(row, col)){
-        return false
-    }
-    
-    return map[row][col] == "#"
+function isFloor(point){
+    return getPoint(point) == "."
 }
 
-function isEmpty(row, col){
-    const map = mostRecentMap()
-    if(!isDefined(row, col)){
-        return false
-    }
-    
-    return map[row][col] == "L"
+function isOccupied(point){
+    return getPoint(point) == "#"
 }
 
-function parseRow(row){
-    return row.split('').reduce((rtn, col, index) => ({...rtn, [index]: col}),{})
+function isEmpty(point){
+    return getPoint(point) == "L"
 }
