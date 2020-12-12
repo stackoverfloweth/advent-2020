@@ -1,4 +1,4 @@
-const sample = `L.LL.LL.LL
+const input = `L.LL.LL.LL
 LLLLLLL.LL
 L.L.L..L..
 LLLL.LL.LL
@@ -8,7 +8,7 @@ L.LLLLL.LL
 LLLLLLLLLL
 L.LLLLLL.L
 L.LLLLL.LL`
-const input = `LLLLLLLLL.LLLL.LLLLLLLLLLLLLLLL.LL.LLLLLLLL.LLLLLLLL.LLLLLLLLLLLLLLLL.L.LLLLLLLLLLLLLLL.LLLL.LLL
+const input1 = `LLLLLLLLL.LLLL.LLLLLLLLLLLLLLLL.LL.LLLLLLLL.LLLLLLLL.LLLLLLLLLLLLLLLL.L.LLLLLLLLLLLLLLL.LLLL.LLL
 .LLLLLLLL.LL.L.LLLLLLLLL.LLLLLLL.L.LLLLLLLL.LLLLLLLLLLLLLLLLLL.LLLL.L.LLLLL.L.LLLLLLLLLLLLLLLLLL
 LLLLLLLLL...LL.LLLLLLLL..LLLLLLLLL.L..LLLLLLLLLLLLLLLLLLLLLLLL.LLL..LLLLLLLLLLLLLLLLLLLLLLLLLLLL
 LLLLLLL.LLLLLL.LLLLLLLLL.LL.LLLLLL.LLLLLLLL.LLLLLLLL.LLLLLLLL..LLLLL.LLLLLL...LLLLLLL.LLLLLLLLLL
@@ -106,7 +106,9 @@ const maps = [
 const rowKeys = Object.keys(maps[0]);
 const colKeys = Object.keys(maps[0][0])
 
-while(rebuild()){}
+//while(rebuild()){}
+rebuild()
+rebuild()
 console.log(JSON.stringify(mostRecentMap()).match(/#/g).length)
 
 function mostRecentMap(){
@@ -141,7 +143,7 @@ function rebuild(){
                 }
             }
             else if(isOccupied(rowIndex,colIndex)){
-                if(report.filter(x => x.isOccupied).length >= 4){
+                if(report.filter(x => x.isOccupied).length >= 5){
                     changed = true
                     map[rowIndex][colIndex] = "L"
                 }else{
@@ -152,30 +154,96 @@ function rebuild(){
     }
 
     maps.push(map)
+    console.log('--------------------')
+    console.log(map)
     return changed
 }
 
 function getAdjacentReport(row, col){
     const report = []
 
-    for(let rowIndex = row-1; rowIndex <= row+1; rowIndex++){
-        for(let colIndex = col-1; colIndex <= col+1; colIndex++){
-            if(rowIndex == row && colIndex == col){
-                continue;
+    function checkPoint(point, target){
+        pointIsValid = point.row != target.row && point.col != target.col && isDefined(point.row, point.col)
+
+        if(pointIsValid){            
+            const slope = calculateSlope({x: point.col, y:point.row}, {x: target.col, y: target.row})
+    
+            if(!isFloor(point.row, point.col) && !report.some(x => x.slope == slope)){
+                const thing = {
+                    target: [target.row, target.col],
+                    slope: slope,
+                    spot: [point.row, point.col],
+                    isOccupied: isOccupied(point.row, point.col),
+                    isEmpty: isEmpty(point.row, point.col),
+                }
+                if(target.row == 0 && target.col == 0){
+                    console.log(thing)
+                }
+                report.push(thing)
             }
-            report.push({
-                isOccupied: isOccupied(rowIndex, colIndex),
-                isEmpty: isEmpty(rowIndex, colIndex),
-            })
-        }   
+        }
+
+        return pointIsValid
+    }    
+
+    let distanceFromTarget = 1
+    let atLeastOneCellDefined = true
+
+    while(atLeastOneCellDefined){
+        // console.log(distanceFromTarget)
+        atLeastOneCellDefined = false;
+
+        let rowIndex = row - distanceFromTarget
+        let colIndex = col - distanceFromTarget
+        let dir = "right"
+
+        while(dir != null){
+            switch(dir){
+                case "right":
+                    if(rowIndex++ >= row + distanceFromTarget){
+                        dir = "down"
+                    }
+                    break;
+                case "down":
+                    if(colIndex++ >= col + distanceFromTarget){
+                        dir = "left"
+                    }
+                    break;
+                case "left":
+                    if(rowIndex-- <= row - distanceFromTarget){
+                        dir = "up"
+                    }
+                    break;
+                case "up":
+                    if(colIndex-- <= col - distanceFromTarget){
+                        dir = null
+                    }
+                    break;
+            }
+
+            if(checkPoint({row: rowIndex, col: colIndex}, {row, col})){
+                atLeastOneCellDefined = true
+            }
+        }
+
+        distanceFromTarget++
     }
 
     return report
 }
 
+function calculateSlope(point, target){
+    return (point.y - target.y) / (point.x - target.x)
+}
+
+function isDefined(row, col){
+    const map = mostRecentMap()
+    return map[row] && map[row][col]
+}
+
 function isFloor(row, col){
     const map = mostRecentMap()
-    if(!map[row] || !map[row][col]){
+    if(!isDefined(row, col)){
         return false
     }
 
@@ -184,7 +252,7 @@ function isFloor(row, col){
 
 function isOccupied(row, col){
     const map = mostRecentMap()
-    if(!map[row] || !map[row][col]){
+    if(!isDefined(row, col)){
         return false
     }
     
@@ -193,7 +261,7 @@ function isOccupied(row, col){
 
 function isEmpty(row, col){
     const map = mostRecentMap()
-    if(!map[row] || !map[row][col]){
+    if(!isDefined(row, col)){
         return false
     }
     
