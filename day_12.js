@@ -1,9 +1,9 @@
 const sample = [
-    {instruction:'F', amount:10},
-    {instruction:'N', amount:3},
-    {instruction:'F', amount:7},
-    {instruction:'R', amount:180},
-    {instruction:'F', amount:11},
+    {instruction: 'F', amount: 10},
+    {instruction: 'N', amount: 3},
+    {instruction: 'F', amount: 7},
+    {instruction: 'R', amount: 90},
+    {instruction: 'F', amount: 11},
 ]
 const input = [
     {instruction:'S', amount:1},
@@ -787,16 +787,17 @@ const input = [
     {instruction:'E', amount:4},
     {instruction:'F', amount:82},
 ]
-const position = {lat: 0, long: 0, facing: 'E'}
+const position = {lat: 0, long: 0}
+const waypoint = {lat: 10, long: 1}
 
 const execute = {
-    N: (set) => position.long += set.amount,
-    S: (set) => position.long -= set.amount,
-    E: (set) => position.lat += set.amount,
-    W: (set) => position.lat -= set.amount,
-    L: (set) => repeat(() => turn[position.facing](set.instruction), set.amount / 90),
-    R: (set) => repeat(() => turn[position.facing](set.instruction), set.amount / 90),
-    F: (set) => forward[position.facing](set),
+    N: (set) => waypoint.long += set.amount,
+    S: (set) => waypoint.long -= set.amount,
+    E: (set) => waypoint.lat += set.amount,
+    W: (set) => waypoint.lat -= set.amount,
+    L: (set) => repeat(() => turn[set.instruction](), set.amount / 90),
+    R: (set) => repeat(() => turn[set.instruction](), set.amount / 90),
+    F: (set) => repeat(() => forward(), set.amount),
 }
 
 const repeat = (action, times) => {
@@ -805,19 +806,35 @@ const repeat = (action, times) => {
     }
 }
 
+const getDifference = () => ({
+    long: waypoint.long - position.long,
+    lat: waypoint.lat - position.lat,
+})
+
 const turn = {
-    N: (direction) => position.facing = direction == "R" ? "E" : "W",
-    S: (direction) => position.facing = direction == "R" ? "W" : "E",
-    E: (direction) => position.facing = direction == "R" ? "S" : "N",
-    W: (direction) => position.facing = direction == "R" ? "N" : "S",
+    R: () => {
+        const difference = getDifference()
+        waypoint.long = position.long + (difference.lat > 0 ? -Math.abs(difference.lat) : +Math.abs(difference.lat))
+        waypoint.lat = position.lat + (difference.long > 0 ? +Math.abs(difference.long) : -Math.abs(difference.long))
+    },
+    L: () => {
+        const difference = getDifference()
+        waypoint.long = position.long + (difference.lat > 0 ? +Math.abs(difference.lat) : -Math.abs(difference.lat))
+        waypoint.lat = position.lat + (difference.long > 0 ? -Math.abs(difference.long) : +Math.abs(difference.long))
+    },
 }
 
-const forward = {
-    N: (set) => position.long += set.amount,
-    S: (set) => position.long -= set.amount,
-    E: (set) => position.lat += set.amount,
-    W: (set) => position.lat -= set.amount,
+const forward = () => {
+    const difference = getDifference()
+
+    position.long += difference.long
+    waypoint.long += difference.long
+    position.lat += difference.lat
+    waypoint.lat += difference.lat
 }
 
 input.forEach(set => execute[set.instruction](set))
 console.log(Math.abs(position.lat) + Math.abs(position.long))
+
+// 1: 1319
+// 2: 62434
