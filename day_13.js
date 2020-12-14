@@ -7,12 +7,17 @@ const input = [37, 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', '
 // console.log((1068781 + 6) % 31)
 // console.log((1068781 + 7) % 19)
 
-let time = Math.floor(100000000000000 / input[0]) * input[0]
+const max = input.reduce((reduced, x, index) => x != 'x' && x > reduced.max ? {index, max:x} : reduced, {index: 0, max: 0})
+//console.log(max)
+let time = Math.floor(100000000000000 / max.max) * max.max
 while (!setComplete(time)) {
-    time += input[0]
+    time += max.max
+    if(time % 10000000 == 0){
+        console.log(time)
+    }
 }
-console.log(time)
+console.log(time - max.index)
 
 function setComplete(time) {
-    return input.every((x, index) => x === 'x' || (time + index) % x === 0)
+    return input.every((x, index) => x === 'x' || (time + index - max.index) % x === 0)
 }
