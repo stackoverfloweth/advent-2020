@@ -640,6 +640,16 @@ function applyMask(binary) {
 }
 
 function getCombinations(arr) {
+    const combinations = []
+
+    for (let i = 0; i < 2**arr.length; i++) {
+        combinations.push(toBinary(i).join())
+    }
+
+    return combinations
+}
+
+function getCombinations(arr) {
     const combinations = new Array(2 ** arr.length).fill({}).map(x => arr.reduce((reduced, x) => ({...reduced, [x]: 0 }), {}))
 
     for (let i = 0; i < 2**arr.length; i++) {
