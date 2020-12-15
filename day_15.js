@@ -1,29 +1,26 @@
-const starting = [0,3,6]
-const history = {}
-let lastNumber = null
-let index = 0
+const sample = [0, 3, 6]
+const input = [0, 14, 6, 20, 1, 4]
+const history = input.slice(0, -1).reduce((reduced, x) => ({ ...reduced, [x]: [] }), {})
+let lastNumber = input.shift()
+let index = 1
 
-while(index < 5){
+while (index < 2020) {
     const nextNumber = getNextNumber()
-
-    console.log(nextNumber, history)
-
-    history[nextNumber].push(nextNumber)
+    history[lastNumber].push(index++)
     lastNumber = nextNumber
-    index++
 }
 
-function getNextNumber(){
-    if(starting.length){
-        const nextNumber = starting.shift()
-        history[nextNumber] = []
-        return nextNumber
+console.log(lastNumber)
+
+function getNextNumber() {
+    if (input.length) {
+        return input.shift()
     }
 
-    if(history[lastNumber] == undefined){
+    if (history[lastNumber] == undefined) {
         history[lastNumber] = []
         return 0
     }
 
-    return history[lastNumber][history[lastNumber] - 1] - history[lastNumber][history[lastNumber] - 2]
+    return index - history[lastNumber][history[lastNumber].length - 1]
 }
