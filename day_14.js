@@ -640,32 +640,17 @@ function applyMask(binary) {
 }
 
 function getCombinations(arr) {
-    const combinations = []
+    const combinations = new Array(2 ** arr.length).fill({}).map(x => arr.reduce((reduced, x) => ({ ...reduced, [x]: 0 }), {}))
 
-    for (let i = 0; i < 2**arr.length; i++) {
-        combinations.push(toBinary(i).join())
+    for (let i = 0; i < 2 ** arr.length; i++) {
+        const combination = toBinary(i).slice(0, arr.length)
+        combination.forEach((bit, index) => {
+            combinations[i][arr[index]] = bit
+        })
     }
 
     return combinations
 }
-
-function getCombinations(arr) {
-    const combinations = new Array(2 ** arr.length).fill({}).map(x => arr.reduce((reduced, x) => ({...reduced, [x]: 0 }), {}))
-
-    for (let i = 0; i < 2**arr.length; i++) {
-        let combination = []
-        for (let ii = 0; ii < arr.length; ii++) {
-            if ((i & 2**ii)) {
-                combination.push(arr[ii])
-            }
-        }
-
-        combination.forEach(x => combinations[i][x] = 1)
-    }
-
-    return combinations
-}
-
 
 function getHighestBit(input) {
     let bit = 1
