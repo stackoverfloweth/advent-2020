@@ -575,30 +575,44 @@ mask = 1X110101X01110111X010X0000000X0XX001
 mem[22024] = 945785
 mem[55321] = 56363
 mem[28412] = 3465`
+const sample = `mask = 000000000000000000000000000000X1001X
+mem[42] = 100
+mask = 00000000000000000000000000000000X0XX
+mem[26] = 1`
 
-const memory = new Array(36).fill(null)
+const memory = {}
 const highestBitPlace = 36
 let mask = []
-const toBinaryLookup = new Array(highestBitPlace).fill(0).reduce((reduced, x, index) => index != 0 ? {...reduced, [2**index]:index} : reduced, {1:0})
-const fromBinaryLookup = new Array(highestBitPlace).fill(0).reduce((reduced, x, index) => index != 0 ? {...reduced, [index]:2**index} : reduced, {0:1})
+const toBinaryLookup = new Array(highestBitPlace).fill(0).reduce((reduced, x, index) => index != 0 ? { ...reduced, [2 ** index]: index } : reduced, { 1: 0 })
+const fromBinaryLookup = new Array(highestBitPlace).fill(0).reduce((reduced, x, index) => index != 0 ? { ...reduced, [index]: 2 ** index } : reduced, { 0: 1 })
 
-input.split('\n').forEach(x => {
+input.split('\n').forEach((x, index) => {
     const maskResult = new RegExp(/^mask = (.*?)$/, "g").exec(x)
     const memResults = new RegExp(/^mem\[(\d+)\] = (\d+)$/, "g").exec(x)
 
-    if(maskResult != null){
-        mask = maskResult[1].split('').reverse().map((x, index) => ({index, override: +x})).filter(x => !isNaN(x.override))
-    } else if(memResults != null) {
-        memory[memResults[1]] = applyMask(toBinary(memResults[2]))
+    if (maskResult != null) {
+        setMask(maskResult[1])
+    } else if (memResults != null) {
+        const addresses = applyMask(toBinary(memResults[1]))
+
+        addresses.forEach(address => {
+            const key = fromBinary(address)
+            memory[key] = Number(memResults[2])
+        })
     }
 })
-console.log(memory.filter(x => x != null).reduce((sum, x) => sum += fromBinary(x), 0))
 
-function toBinary(input){
+console.log(Object.keys(memory).reduce((sum, x) => sum += memory[x], 0))
+
+function setMask(input) {
+    mask = input.split('').reverse().map((x, index) => ({ index, override: x }))
+}
+
+function toBinary(input) {
     const binary = new Array(highestBitPlace).fill(0)
     let remainder = input
 
-    while(remainder > 0){
+    while (remainder > 0) {
         const highestBit = getHighestBit(remainder)
         binary[toBinaryLookup[highestBit]] = 1
         remainder -= highestBit
@@ -607,21 +621,50 @@ function toBinary(input){
     return binary
 }
 
-function fromBinary(binary){
+function fromBinary(binary) {
     return binary.reduce((value, x, index) => x == 1 ? value += fromBinaryLookup[index] : value, 0)
 }
 
-function applyMask(binary){
-    mask.forEach(x => binary[x.index] = x.override)
+function applyMask(binary) {
+    const combinations = []
 
-    return binary
+    mask.filter(x => x.override == 1).forEach(x => binary[x.index] = 1)
+
+    getCombinations(mask.filter(x => x.override == "X").map(x => x.index)).forEach(x => {
+        const combination = [...binary]
+        Object.keys(x).forEach(key => combination[key] = x[key])
+        combinations.push(combination)
+    })
+
+    return combinations
 }
 
-function getHighestBit(input){
+function getCombinations(arr) {
+    const combinations = new Array(2 ** arr.length).fill({}).map(x => arr.reduce((reduced, x) => ({...reduced, [x]: 0 }), {}))
+
+    for (let i = 0; i < 2**arr.length; i++) {
+        let combination = []
+        for (let ii = 0; ii < arr.length; ii++) {
+            if ((i & 2**ii)) {
+                combination.push(arr[ii])
+            }
+        }
+
+        combination.forEach(x => combinations[i][x] = 1)
+    }
+
+    return combinations
+}
+
+
+function getHighestBit(input) {
     let bit = 1
-    while(bit * 2 <= input){
+    while (bit * 2 <= input) {
         bit *= 2
     }
 
     return bit
 }
+
+// 1: 18630548206046
+// 2: 4254673508445
