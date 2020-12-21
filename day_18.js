@@ -395,7 +395,11 @@ function calculate(equation){
 function executeOperation(equation){
     let results = []
 
-    while ((results = findNextOperation(equation)) != null) {
+    while ((results = findNextAddition(equation)) != null) {
+        equation = equation.slice(0, results.index) + eval(results[0]) + equation.slice(results.index + results[0].length)
+    }
+
+    while ((results = findNextMultiplication(equation)) != null) {
         equation = equation.slice(0, results.index) + eval(results[0]) + equation.slice(results.index + results[0].length)
     }
 
@@ -408,8 +412,14 @@ function findNextGroup(equation){
     return regexp.exec(equation)
 }
 
-function findNextOperation(equation){
-    const regexp = new RegExp(/\d+(?:\+|\*)\d+/g)
+function findNextAddition(equation){
+    const regexp = new RegExp(/\d+\+\d+/g)
+
+    return regexp.exec(equation)
+}
+
+function findNextMultiplication(equation){
+    const regexp = new RegExp(/\d+\*\d+/g)
 
     return regexp.exec(equation)
 }
