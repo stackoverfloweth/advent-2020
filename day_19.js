@@ -1,20 +1,3 @@
-// const rules = {
-//     0: '4 1 5',
-//     1: '2 3 | 3 2',
-//     2: '4 4 | 5 5',
-//     3: '4 5 | 5 4',
-//     4: 'a',
-//     5: 'b',
-// }
-
-// const messages = [
-//     'ababbb',
-//     'bababa',
-//     'abbbab',
-//     'aaabbb',
-//     'aaaabbb',
-// ]
-
 const rules = {
     19: '33 53 | 123 7',
     3: '33 82 | 123 45',
@@ -633,82 +616,76 @@ const messages = [
     'aabbaabaababaabbaaababaaaaaaaabbaaaaabbbabbabaab',
 ]
 
-//Object.keys(rules).forEach(key => rules[key] = parseRule(rules[key]))
-rules[0] = parseRule(rules[0])
 
-const validCount = messages.reduce((sum, message) => validateRule(message, 0) ? sum += 1 : sum, 0)
-console.log(validCount)
+// const rules = {
+//     0: '4 1 5',
+//     1: '2 3 | 3 2',
+//     2: '4 4 | 5 5',
+//     3: '4 5 | 5 4',
+//     4: 'a',
+//     5: 'b',
+// }
 
-function parseRule(rule) {
-    if (rule.startsWith('"')) {
-        return rule.replace(/\"/g, '')
+// const messages = [
+//     'ababbb',
+//     'bababa',
+//     'abbbab',
+//     'aaabbb',
+//     'aaaabbb',
+// ]
+
+const validSum = messages.reduce((sum, message) => {
+    try {
+        validate(message, 0)
+    } catch (e) {
+        if (e == "VALID") {
+            sum += 1
+        }
     }
 
-    let result = []
-    while ((result = getNextReference(rule)) != null) {
-        let reference = rules[result[0]]
-        if (reference.indexOf('|') > -1) {
-            reference = `(${reference})`
+    return sum
+}, 0)
+
+console.log(validSum)
+
+function validate(message, index) {
+    const rule = rules[index]
+    if (rule.match(/[a-zA-Z]/g)) {
+        if (message == rule) {
+            throw 'VALID'
         }
 
-        rule = rule.slice(0, result.index) + reference + rule.slice(result.index + result[0].length)
-    }
-
-    rule = rule.replace(/\s/g, '')
-
-    if (rule.indexOf('|') > -1) {
-        rule = splitRule(rule)
-    }
-
-    return rule
-    //.split('|').map(opt => opt.replace(/\s/g, ''))
-}
-
-function splitRule(rule) {
-    const options = []
-    const ruleSplits = rule.match(/\|/g).length
-    const combinations = getCombinations(ruleSplits)
-
-    combinations.forEach(combination => {
-        let option = rule
-        let result = []
-
-        while ((result = getNextGroup(option)) != null) {
-            const insideParens = result[0].slice(1, result[0].length - 1)
-            const selection = insideParens.split('|')[combination.shift()]
-
-            option = option.slice(0, result.index) + selection + option.slice(result.index + result[0].length)
+        if (message.startsWith(rule)) {
+            return message.replace(rule, '')
         }
 
-        options.push(option)
-    })
-
-    return options
-}
-
-function getCombinations(length) {
-    const combinations = []
-
-    for (let i = 0; i < 2 ** length; i++) {
-        const combination = i.toString(2)
-        combinations.push(combination.padStart(length, '0').split(''))
+        throw 'NOT_VALID'
     }
 
-    return combinations
-}
+    const options = rule.split('|')
 
-function getNextReference(rule) {
-    const regExp = new RegExp(/\d+/g)
+    for (let o = 0; o < options.length; o++) {
+        const indexes = options[o].match(/\d+/g)
+        let optionPass = true
+        let optionMessage = message
 
-    return regExp.exec(rule)
-}
+        for (let i = 0; i < indexes.length; i++) {
+            try {
+                optionMessage = validate(optionMessage, indexes[i])
+            } catch (e) {
+                if (e == 'NOT_VALID') {
+                    optionPass = false
+                }
+                else {
+                    throw e
+                }
+            }
+        }
 
-function getNextGroup(rule) {
-    const regExp = new RegExp(/(\(\w+\|\w+\))/g)
+        if (optionPass == true) {
+            return optionMessage
+        }
+    }
 
-    return regExp.exec(rule)
-}
-
-function validateRule(message, index) {
-    return rules[index].includes(message)
+    throw 'NOT_VALID'
 }
